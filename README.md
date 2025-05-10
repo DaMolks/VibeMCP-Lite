@@ -4,12 +4,12 @@
 ![Node](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-VibeMCP-Lite est un panneau de contrôle minimaliste qui permet à Claude de manipuler des fichiers sur votre système local et d'interagir avec GitHub directement via le protocole MCP (Model Context Protocol).
+VibeMCP-Lite est un Model Control Panel (MCP) qui permet à Claude de manipuler directement des fichiers sur votre système local et d'interagir avec GitHub via le protocole MCP (Model Context Protocol).
 
 ## 🌟 Caractéristiques principales
 
 - **Édition partielle de fichiers** : Modifiez des sections spécifiques des fichiers sans avoir à copier/coller l'intégralité du contenu
-- **Intégration directe avec Claude Desktop** : Utilisation de webhooks locaux pour permettre à Claude d'exécuter des commandes
+- **Intégration directe avec Claude Desktop** : Utilisation du protocole MCP pour permettre à Claude d'exécuter des commandes
 - **Gestion simplifiée des projets** : Création et organisation de vos projets de développement
 - **Intégration GitHub** : Manipulez vos dépôts GitHub directement
 
@@ -25,17 +25,16 @@ VibeMCP-Lite résout ce problème en permettant à Claude de :
 
 ## 💻 Comment ça marche
 
-1. Vous démarrez le serveur VibeMCP-Lite localement
-2. Vous configurez Claude Desktop pour reconnaître et exécuter les commandes MCP (voir [Configuration de Claude](./docs/CLAUDE_SETUP.md))
-3. Dans Claude Desktop, vous pouvez utiliser des commandes spéciales entourées de backticks triples :
+1. Vous installez et démarrez le serveur VibeMCP-Lite localement
+2. Vous configurez Claude Desktop pour communiquer avec VibeMCP-Lite (voir [Configuration de Claude](./docs/CLAUDE_SETUP.md))
+3. Dans Claude Desktop, vous pouvez utiliser des commandes MCP directement :
 
 ```
 ```mcp create-project mon-app```
 ```
 
-4. Claude communique avec le serveur VibeMCP-Lite via un webhook
-5. Le serveur exécute la commande et renvoie le résultat à Claude
-6. Claude vous présente le résultat
+4. Claude exécute la commande via VibeMCP-Lite et vous montre les résultats
+5. Vous pouvez alors manipuler vos fichiers et projets sans jamais quitter Claude
 
 ## 📋 Commandes disponibles
 
