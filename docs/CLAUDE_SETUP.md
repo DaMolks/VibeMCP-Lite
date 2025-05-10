@@ -1,106 +1,130 @@
-# Intégration avec Claude
+# Configuration de Claude Desktop pour VibeMCP-Lite
 
-Ce document clarifie comment VibeMCP-Lite peut être utilisé avec Claude et les limitations actuelles de cette intégration.
+Ce document explique comment configurer Claude Desktop pour qu'il puisse communiquer directement avec VibeMCP-Lite via le protocole MCP.
 
-## Clarification importante
+## Prérequis
 
-**Important** : Claude Desktop (l'application de bureau d'Anthropic) n'a pas actuellement de fonctionnalité native permettant d'exécuter des requêtes HTTP vers des services externes comme VibeMCP-Lite, ni de système d'extensions ou de plugins permettant d'ajouter cette fonctionnalité.
+- VibeMCP-Lite installé sur votre système
+- Claude Desktop installé
+- Accès au fichier de configuration de Claude Desktop
 
-## Options d'intégration
+## Configuration de Claude Desktop
 
-### Option 1 : Utilisation de Claude comme interface de conversation
+### Étape 1 : Localiser le fichier de configuration de Claude Desktop
 
-Cette option utilise Claude comme une interface conversationnelle pour VibeMCP-Lite, mais **vous** devez exécuter manuellement les commandes suggérées par Claude.
+Le fichier de configuration de Claude Desktop se trouve généralement dans le répertoire d'installation de Claude Desktop, sous un nom comme `config.json` ou `claude_desktop_config.json`.
 
-1. **Discutez avec Claude** de votre projet, des modifications que vous souhaitez faire, etc.
+### Étape 2 : Ajouter VibeMCP-Lite à la configuration MCP
 
-2. **Claude vous suggère des commandes MCP** à exécuter, par exemple :
-   ```
-   Je vous suggère d'utiliser la commande suivante dans VibeMCP-Lite :
-   create-project mon-projet "Description du projet"
-   ```
+Ouvrez le fichier de configuration dans un éditeur de texte et recherchez la section `mcpServers`. Si elle n'existe pas, vous devrez la créer. Ajoutez ensuite VibeMCP-Lite comme suit :
 
-3. **Vous exécutez la commande** via l'interface de ligne de commande ou l'API REST de VibeMCP-Lite :
-   ```bash
-   # Via curl
-   curl -X POST http://localhost:3000/api/mcp/execute \
-     -H "Content-Type: application/json" \
-     -d '{"command": "create-project mon-projet \"Description du projet\""}'
-   ```
-
-4. **Vous communiquez les résultats à Claude** pour continuer la conversation.
-
-### Option 2 : Interface utilisateur VibeMCP
-
-Une interface utilisateur web pour VibeMCP-Lite peut être développée pour :
-
-1. Afficher les projets et fichiers
-2. Permettre d'éditer visuellement les fichiers
-3. Exécuter les commandes MCP suggérées par Claude
-4. Voir l'historique des commandes et leurs résultats
-
-Cette option n'est pas encore implémentée, mais elle fait partie des plans de développement futurs.
-
-### Option 3 : API Claude (pour les développeurs)
-
-Les développeurs disposant d'un accès à l'API Claude pourraient développer une intégration plus complète entre Claude et VibeMCP-Lite. Cela nécessiterait :
-
-1. Un accès à l'API Claude
-2. Le développement d'une application intermédiaire qui :
-   - Envoie les messages de l'utilisateur à l'API Claude
-   - Intercepte les commandes MCP dans les réponses de Claude
-   - Exécute ces commandes sur le serveur VibeMCP-Lite
-   - Retourne les résultats à l'utilisateur
-
-## Utilisation pratique actuelle
-
-En attendant une intégration plus profonde, voici comment utiliser VibeMCP-Lite efficacement avec Claude :
-
-1. **Utilisez Claude pour la réflexion et la génération de code** :
-   - Discutez de votre projet avec Claude
-   - Demandez des suggestions de code
-   - Demandez des modifications spécifiques à apporter à votre code existant
-
-2. **Utilisez VibeMCP-Lite pour manipuler les fichiers** :
-   - Suivez les suggestions de Claude pour créer/modifier des fichiers
-   - Exécutez les commandes MCP via l'API ou l'interface que vous préférez
-   - Utilisez particulièrement la fonctionnalité d'édition partielle (`edit <fichier> <ligne_début>-<ligne_fin>`)
-
-3. **Partagez les résultats avec Claude** :
-   - Informez Claude des résultats des commandes
-   - Demandez des ajustements ou des suggestions supplémentaires
-
-## Exemple de workflow
-
-```
-Vous (à Claude) : J'aimerais ajouter une fonction de validation d'email dans mon formulaire React.
-
-Claude : Je peux vous aider avec ça. Pouvez-vous me montrer le code actuel du formulaire ?
-
-Vous : Voici le code des lignes 10-20 du fichier src/components/ContactForm.js dans mon projet "site-web" :
-[collez le code ici]
-
-Claude : Je suggère d'ajouter une fonction de validation comme celle-ci :
-[Claude génère le code]
-
-Pour l'intégrer à votre formulaire, utilisez VibeMCP-Lite avec cette commande :
-edit src/components/ContactForm.js 10-20
-
-Puis remplacez ces lignes par le code que je viens de vous fournir.
-
-Vous : [Exécutez la commande avec VibeMCP-Lite et appliquez les modifications]
-
-Vous (à Claude) : J'ai appliqué les modifications. Maintenant je dois aussi modifier la fonction handleSubmit pour utiliser cette validation.
-
-Claude : [Continue à vous aider avec le développement]
+```json
+"mcpServers": {
+  "vibemcp": {
+    "args": [
+      "server"
+    ],
+    "command": "node",
+    "cwd": "C:\\chemin\\vers\\VibeMCP-Lite\\server"
+  }
+}
 ```
 
-## Plans de développement futur
+Si vous utilisez des chemins sur Windows, assurez-vous de doubler les barres obliques inverses comme montré ci-dessus.
 
-Nous travaillons sur plusieurs améliorations pour faciliter l'intégration entre Claude et VibeMCP-Lite :
+Pour Linux/macOS, la configuration serait :
 
-1. **Interface utilisateur web** pour VibeMCP-Lite
-2. **Extension de navigateur** pour faciliter les interactions entre Claude (version web) et VibeMCP-Lite
-3. **Intégration API** pour les développeurs ayant accès à l'API Claude
+```json
+"mcpServers": {
+  "vibemcp": {
+    "args": [
+      "server"
+    ],
+    "command": "node",
+    "cwd": "/chemin/vers/VibeMCP-Lite/server"
+  }
+}
+```
 
-Restez à l'écoute pour ces mises à jour dans les versions futures.
+### Étape 3 : Sauvegarder la configuration
+
+Sauvegardez le fichier de configuration et redémarrez Claude Desktop pour appliquer les changements.
+
+### Étape 4 : Vérifier l'installation
+
+Pour vérifier que Claude Desktop peut maintenant communiquer avec VibeMCP-Lite, démarrez une conversation avec Claude et essayez une commande MCP simple comme :
+
+```
+```mcp list-projects```
+```
+
+Si tout est correctement configuré, Claude devrait exécuter la commande et vous montrer les résultats.
+
+## Configuration alternative pour une installation existante
+
+Si VibeMCP-Lite est déjà installé et en cours d'exécution comme un service séparé, vous pouvez configurer Claude Desktop pour se connecter à ce service comme suit :
+
+```json
+"mcpServers": {
+  "vibemcp": {
+    "url": "http://localhost:3000/api/mcp"
+  }
+}
+```
+
+Cela indique à Claude Desktop d'envoyer les commandes MCP à l'URL spécifiée plutôt que de démarrer un nouveau processus.
+
+## Utilisation avec Fleur
+
+Si vous utilisez déjà Fleur avec Claude Desktop, vous pouvez ajouter VibeMCP-Lite en plus de Fleur dans la configuration :
+
+```json
+"mcpServers": {
+  "fleur": {
+    "args": [
+      "mcp-fleur"
+    ],
+    "command": "C:\\Users\\Utilisateur\\.local\\bin\\uvx.exe"
+  },
+  "vibemcp": {
+    "args": [
+      "server"
+    ],
+    "command": "node",
+    "cwd": "C:\\chemin\\vers\\VibeMCP-Lite\\server"
+  }
+}
+```
+
+Dans ce cas, vous devrez spécifier quel serveur MCP vous souhaitez utiliser en préfixant vos commandes MCP :
+
+- Pour Fleur : `` ```mcp:fleur commande args``` ``
+- Pour VibeMCP-Lite : `` ```mcp:vibemcp commande args``` ``
+
+Si vous ne spécifiez pas de préfixe, Claude Desktop utilisera le premier serveur MCP configuré par défaut.
+
+## Personnalisation du point d'entrée MCP
+
+Si vous souhaitez modifier le point d'entrée MCP dans VibeMCP-Lite, vous devrez ajuster le fichier `server/index.js` pour exposer le point d'entrée à l'URL que Claude Desktop attend.
+
+Le point d'entrée par défaut pour Claude Desktop est `/mcp`. Assurez-vous que VibeMCP-Lite expose ses fonctionnalités à cette URL si vous utilisez la configuration `url` plutôt que `command`.
+
+## Dépannage
+
+### Claude ne détecte pas les commandes MCP
+
+- Vérifiez que le fichier de configuration est correctement formaté (JSON valide)
+- Assurez-vous que les chemins vers VibeMCP-Lite sont corrects
+- Vérifiez que VibeMCP-Lite est correctement installé
+
+### Claude détecte les commandes mais ne les exécute pas
+
+- Vérifiez que VibeMCP-Lite est en cours d'exécution ou peut être démarré par Claude Desktop
+- Assurez-vous que les ports utilisés ne sont pas bloqués par un pare-feu
+- Consultez les logs de Claude Desktop et VibeMCP-Lite pour plus de détails
+
+### Problèmes de permissions
+
+- Sur certains systèmes, des problèmes de permissions peuvent survenir
+- Assurez-vous que Claude Desktop a les permissions nécessaires pour exécuter les commandes spécifiées
+- Essayez d'exécuter Claude Desktop en tant qu'administrateur si nécessaire
