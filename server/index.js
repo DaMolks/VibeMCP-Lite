@@ -4,6 +4,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const fs = require('fs').promises;
 const path = require('path');
+const axios = require('axios');
 
 // Routes
 const projectsRoutes = require('./routes/projects');
@@ -51,15 +52,11 @@ app.post('/mcp', async (req, res) => {
     console.log(`MCP command received: ${command}`);
     
     // Rediriger vers le gestionnaire MCP interne
-    const mcpResponse = await fetch(`http://localhost:${PORT}/api/mcp/execute`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ command })
-    }).then(response => response.json());
+    const mcpResponse = await axios.post(`http://localhost:${PORT}/api/mcp/execute`, {
+      command
+    });
     
-    res.json(mcpResponse);
+    res.json(mcpResponse.data);
   } catch (error) {
     console.error('Error executing MCP command:', error);
     res.status(500).json({ error: error.message });
