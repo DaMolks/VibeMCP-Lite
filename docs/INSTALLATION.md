@@ -40,7 +40,6 @@ Dans le fichier `.env`, configurez les paramètres suivants :
 PORT=3000                                    # Port sur lequel le serveur s'exécutera
 GITHUB_TOKEN=votre_token_github              # Token d'accès GitHub (optionnel)
 CLAUDE_WEBHOOK_URL=http://localhost:5678/webhook  # URL du webhook Claude Desktop
-CLAUDE_API_KEY=votre_cle_api_claude          # Clé API Claude (optionnel pour le moment)
 ```
 
 ### 3. Démarrer le serveur
@@ -71,7 +70,7 @@ Les commandes seront automatiquement interceptées et exécutées sur votre serv
 
 ### Option 2 : Intégration via un webhook local
 
-Pour une intégration plus transparente :
+Pour une intégration plus transparente, nous utilisons un mécanisme de webhook :
 
 1. Assurez-vous que votre serveur VibeMCP-Lite est en cours d'exécution
 2. Dans votre conversation avec Claude, dites-lui que vous souhaitez utiliser VibeMCP-Lite
