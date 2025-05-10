@@ -38,12 +38,40 @@ app.use('/api/github', githubRoutes);
 app.use('/api/mcp', mcpRoutes);
 app.use('/api/claude', claudeRoutes);
 
+// Point d'entrée MCP principal pour l'intégration Claude Desktop
+app.post('/mcp', async (req, res) => {
+  try {
+    // Format attendu par Claude Desktop
+    const { command } = req.body;
+    
+    if (!command) {
+      return res.status(400).json({ error: 'Command is required' });
+    }
+    
+    console.log(`MCP command received: ${command}`);
+    
+    // Rediriger vers le gestionnaire MCP interne
+    const mcpResponse = await fetch(`http://localhost:${PORT}/api/mcp/execute`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ command })
+    }).then(response => response.json());
+    
+    res.json(mcpResponse);
+  } catch (error) {
+    console.error('Error executing MCP command:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Route de test
 app.get('/api/status', (req, res) => {
   res.json({
     status: 'ok',
     version: '0.1.0',
-    features: ['mcp', 'github-integration', 'claude-desktop-webhook']
+    features: ['mcp', 'github-integration', 'claude-desktop-integration']
   });
 });
 
@@ -53,6 +81,6 @@ app.get('/api/status', (req, res) => {
 
   app.listen(PORT, () => {
     console.log(`VibeMCP-Lite server running on port ${PORT}`);
-    console.log(`MCP endpoint available at http://localhost:${PORT}/api/mcp`);
+    console.log(`MCP endpoint available at http://localhost:${PORT}/mcp`);
   });
 })();
