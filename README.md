@@ -26,15 +26,16 @@ VibeMCP-Lite résout ce problème en permettant à Claude de :
 ## 💻 Comment ça marche
 
 1. Vous démarrez le serveur VibeMCP-Lite localement
-2. Dans Claude Desktop, vous pouvez utiliser des commandes spéciales entourées de backticks triples :
+2. Vous configurez Claude Desktop pour reconnaître et exécuter les commandes MCP (voir [Configuration de Claude](./docs/CLAUDE_SETUP.md))
+3. Dans Claude Desktop, vous pouvez utiliser des commandes spéciales entourées de backticks triples :
 
 ```
 ```mcp create-project mon-app```
 ```
 
-3. Claude communique avec le serveur VibeMCP-Lite via un webhook
-4. Le serveur exécute la commande et renvoie le résultat à Claude
-5. Claude vous présente le résultat
+4. Claude communique avec le serveur VibeMCP-Lite via un webhook
+5. Le serveur exécute la commande et renvoie le résultat à Claude
+6. Claude vous présente le résultat
 
 ## 📋 Commandes disponibles
 
@@ -68,8 +69,9 @@ Pour des instructions détaillées, consultez notre [Guide d'installation](./doc
 ## 📝 Documentation
 
 - [Guide d'installation](./docs/INSTALLATION.md) - Instructions détaillées pour l'installation et la configuration
+- [Configuration de Claude Desktop](./docs/CLAUDE_SETUP.md) - Comment configurer Claude pour qu'il puisse utiliser VibeMCP-Lite
 - [Guide d'utilisation](./docs/USAGE.md) - Comment utiliser VibeMCP-Lite avec Claude
-- [Intégration avec Claude Desktop](./docs/CLAUDE_DESKTOP_INTEGRATION.md) - Détails sur l'intégration avec Claude
+- [Intégration avec Claude Desktop](./docs/CLAUDE_DESKTOP_INTEGRATION.md) - Détails techniques sur l'intégration avec Claude
 - [Documentation de l'API](./docs/API.md) - Description complète de l'API RESTful
 
 ## 🏗️ Architecture simplifiée
