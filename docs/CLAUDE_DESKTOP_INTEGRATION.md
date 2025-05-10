@@ -226,6 +226,36 @@ export default ContactForm;
   };
 ```
 
+## Configuration technique
+
+### Côté VibeMCP-Lite
+
+VibeMCP-Lite s'attend à recevoir des requêtes POST à l'endpoint `/api/claude/webhook` avec un corps JSON contenant les propriétés `message` et éventuellement `type`.
+
+Exemple de requête :
+```json
+{
+  "message": "```mcp list-projects```",
+  "type": "command"
+}
+```
+
+Le serveur répond avec un objet JSON contenant le résultat de la commande :
+```json
+{
+  "success": true,
+  "response": {
+    "projects": [...]
+  }
+}
+```
+
+### Côté Claude Desktop
+
+Pour que Claude Desktop puisse envoyer des requêtes à VibeMCP-Lite, il faut qu'il soit configuré pour écouter les commandes MCP et les envoyer au webhook configuré.
+
+La détection des commandes MCP se fait à l'aide d'expressions régulières pour identifier les blocs de code avec le préfixe `mcp`.
+
 ## Sécurité et considérations
 
 ### Limitations d'accès
