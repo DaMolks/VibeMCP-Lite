@@ -6,31 +6,43 @@ const path = require('path');
 
 // Configuration Claude
 let claudeConfig = {
-  apiKey: null,
   webhookUrl: null,
   connected: false,
   lastResponse: null,
   status: 'disconnected'
 };
 
-// Endpoint pour configurer Claude
+// Initialiser la configuration
+const initConfig = () => {
+  claudeConfig.webhookUrl = process.env.CLAUDE_WEBHOOK_URL || 'http://localhost:5678/webhook';
+  claudeConfig.connected = !!claudeConfig.webhookUrl;
+  claudeConfig.status = claudeConfig.connected ? 'connected' : 'disconnected';
+  
+  return claudeConfig.connected;
+};
+
+// Essayer d'initialiser la configuration au démarrage
+initConfig();
+
+// Endpoint pour configurer le webhook Claude
 router.post('/setup', async (req, res) => {
   try {
-    const { apiKey } = req.body;
+    const { webhookUrl } = req.body;
 
-    if (!apiKey) {
-      return res.status(400).json({ error: 'API key is required' });
+    // Enregistrer l'URL du webhook
+    if (webhookUrl) {
+      claudeConfig.webhookUrl = webhookUrl;
+    } else {
+      // Utiliser l'URL par défaut ou depuis l'environnement
+      claudeConfig.webhookUrl = process.env.CLAUDE_WEBHOOK_URL || 'http://localhost:5678/webhook';
     }
-
-    // Enregistrer la clé API
-    claudeConfig.apiKey = apiKey;
-    claudeConfig.webhookUrl = process.env.CLAUDE_WEBHOOK_URL || 'http://localhost:5678/webhook';
+    
     claudeConfig.connected = true;
     claudeConfig.status = 'connected';
 
     res.json({
       success: true,
-      message: 'Claude configuration updated successfully',
+      message: 'Claude webhook configuration updated successfully',
       webhookUrl: claudeConfig.webhookUrl
     });
   } catch (error) {
@@ -71,7 +83,7 @@ router.post('/webhook', async (req, res) => {
   }
 });
 
-// Envoyer un message à Claude
+// Envoyer un message à Claude via le webhook
 router.post('/message', async (req, res) => {
   try {
     const { message } = req.body;
@@ -81,8 +93,8 @@ router.post('/message', async (req, res) => {
     }
 
     // Vérifier si Claude est configuré
-    if (!claudeConfig.apiKey) {
-      return res.status(400).json({ error: 'Claude API not configured' });
+    if (!claudeConfig.connected) {
+      return res.status(400).json({ error: 'Claude webhook not configured. Please setup the webhook first.' });
     }
 
     // Détecter si c'est une commande MCP directe (format: ```mcp commande args```)
@@ -97,21 +109,19 @@ router.post('/message', async (req, res) => {
       });
     }
 
-    // Autrement, envoyer le message à l'API Claude
-    // Note: Ceci est une simulation car la vraie API Claude nécessiterait une intégration spécifique
-    // que nous remplaçons ici par un simple retour
-    // Dans une version réelle, cette partie appellerait l'API Claude
-
-    const claudeResponse = {
-      message: `J'ai reçu votre message: "${message}". Comment puis-je vous aider avec votre projet?`,
+    // Autrement, retourner une réponse standard
+    // Note: Dans une version intégrée à Claude, ce message pourrait être traité
+    // différemment ou envoyé au webhook de Claude Desktop
+    const simpleResponse = {
+      message: `Commande non reconnue. Utilisez le format \`\`\`mcp commande args\`\`\` pour exécuter des commandes MCP.`,
       timestamp: new Date().toISOString()
     };
 
-    claudeConfig.lastResponse = claudeResponse;
+    claudeConfig.lastResponse = simpleResponse;
 
     res.json({
       type: 'claude_response',
-      message: claudeResponse.message
+      message: simpleResponse.message
     });
   } catch (error) {
     res.status(500).json({
@@ -164,6 +174,15 @@ router.post('/execute-commands', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+// Obtenir l'état de la configuration Claude
+router.get('/status', (req, res) => {
+  res.json({
+    status: claudeConfig.status,
+    webhookUrl: claudeConfig.webhookUrl,
+    connected: claudeConfig.connected
+  });
 });
 
 // Fonctions utilitaires
