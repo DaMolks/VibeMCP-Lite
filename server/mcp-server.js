@@ -65,6 +65,93 @@ const waitForBackend = async () => {
   throw new Error('Failed to connect to VibeMCP-Lite backend');
 };
 
+// Tool definitions for the MCP protocol
+const tools = [
+  {
+    id: "create-project",
+    name: "Create Project",
+    description: "Create a new project",
+    parameters: [
+      {
+        name: "name",
+        type: "string",
+        description: "Project name",
+        required: true
+      },
+      {
+        name: "description",
+        type: "string",
+        description: "Project description",
+        required: false
+      }
+    ]
+  },
+  {
+    id: "list-projects",
+    name: "List Projects",
+    description: "List all available projects",
+    parameters: []
+  },
+  {
+    id: "switch-project",
+    name: "Switch Project",
+    description: "Switch to a different project",
+    parameters: [
+      {
+        name: "name",
+        type: "string",
+        description: "Project name",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "edit",
+    name: "Edit File",
+    description: "Edit specific lines in a file",
+    parameters: [
+      {
+        name: "file",
+        type: "string",
+        description: "File path",
+        required: true
+      },
+      {
+        name: "range",
+        type: "string",
+        description: "Line range (e.g., '10-20')",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "exec",
+    name: "Execute Command",
+    description: "Execute a shell command",
+    parameters: [
+      {
+        name: "command",
+        type: "string", 
+        description: "Shell command to execute",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "git-commit",
+    name: "Git Commit",
+    description: "Commit changes to git",
+    parameters: [
+      {
+        name: "message",
+        type: "string",
+        description: "Commit message",
+        required: true
+      }
+    ]
+  }
+];
+
 // Function to handle client connections
 const handleConnection = async (socket) => {
   console.error('Client connected to MCP server');
@@ -224,6 +311,33 @@ process.stdin.on('data', async (chunk) => {
               },
               capabilities: {},
               protocolVersion: '2024-11-05'
+            },
+            id: message.id
+          };
+        } else if (message.method === 'tools/list') {
+          // Handle tools listing request
+          response = {
+            jsonrpc: '2.0',
+            result: {
+              tools: tools
+            },
+            id: message.id
+          };
+        } else if (message.method === 'resources/list') {
+          // Handle resources listing request
+          response = {
+            jsonrpc: '2.0',
+            result: {
+              resources: []
+            },
+            id: message.id
+          };
+        } else if (message.method === 'prompts/list') {
+          // Handle prompts listing request
+          response = {
+            jsonrpc: '2.0',
+            result: {
+              prompts: []
             },
             id: message.id
           };
