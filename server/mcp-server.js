@@ -152,130 +152,31 @@ const tools = [
   }
 ];
 
-// Function to handle client connections
-const handleConnection = async (socket) => {
-  console.error('Client connected to MCP server');
-  
-  // Wait for the backend to be ready
-  try {
-    await waitForBackend();
-  } catch (error) {
-    console.error(error.message);
-    socket.write(JSON.stringify({
-      jsonrpc: '2.0',
-      error: {
-        code: -32603,
-        message: 'Internal error: backend not available'
-      },
-      id: null
-    }) + '\r\n');
-    socket.end();
-    return;
+// Helper function to send a valid JSON-RPC response
+function sendJsonRpcResponse(output, message) {
+  // Ensure we have a valid jsonrpc and id field
+  const response = {
+    jsonrpc: "2.0",
+    id: message.id || null, // Include the id from the request or null if not present
+    result: message.result,
+    // Include error only if present
+    ...(message.error ? { error: message.error } : {})
+  };
+
+  // Remove result if error exists
+  if (response.error) {
+    delete response.result;
   }
-  
-  let buffer = '';
-  
-  socket.on('data', async (data) => {
-    buffer += data.toString();
-    
-    // Process each complete message
-    let newlineIndex;
-    while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-      const line = buffer.substring(0, newlineIndex).trim();
-      buffer = buffer.substring(newlineIndex + 1);
-      
-      if (!line) continue;
-      
-      try {
-        const message = JSON.parse(line);
-        console.error('Received message:', message);
-        
-        // Handle JSON-RPC messages
-        if (message.jsonrpc === '2.0') {
-          if (message.method === 'initialize') {
-            // Handle initialize request
-            socket.write(JSON.stringify({
-              jsonrpc: '2.0',
-              result: {
-                serverInfo: {
-                  name: 'vibemcp-lite',
-                  version: '0.1.0'
-                },
-                capabilities: {},
-                protocolVersion: '2024-11-05'
-              },
-              id: message.id
-            }) + '\r\n');
-          } else if (message.method === 'exec') {
-            // Handle exec request (pass to backend)
-            try {
-              const command = message.params.command;
-              console.error(`Executing command: ${command}`);
-              
-              const response = await axios.post(`${SERVER_URL}/api/mcp/execute`, {
-                command
-              });
-              
-              socket.write(JSON.stringify({
-                jsonrpc: '2.0',
-                result: {
-                  stdout: JSON.stringify(response.data),
-                  stderr: ''
-                },
-                id: message.id
-              }) + '\r\n');
-            } catch (error) {
-              console.error('Error executing command:', error);
-              socket.write(JSON.stringify({
-                jsonrpc: '2.0',
-                error: {
-                  code: -32603,
-                  message: `Command execution failed: ${error.message}`
-                },
-                id: message.id
-              }) + '\r\n');
-            }
-          } else if (message.method === 'shutdown') {
-            // Handle shutdown request
-            socket.write(JSON.stringify({
-              jsonrpc: '2.0',
-              result: null,
-              id: message.id
-            }) + '\r\n');
-          } else {
-            // Unknown method
-            socket.write(JSON.stringify({
-              jsonrpc: '2.0',
-              error: {
-                code: -32601,
-                message: `Method not found: ${message.method}`
-              },
-              id: message.id
-            }) + '\r\n');
-          }
-        }
-      } catch (error) {
-        console.error('Error processing message:', error);
-        socket.write(JSON.stringify({
-          jsonrpc: '2.0',
-          error: {
-            code: -32700,
-            message: 'Parse error'
-          },
-          id: null
-        }) + '\r\n');
-      }
+
+  // Remove undefined fields
+  Object.keys(response).forEach(key => {
+    if (response[key] === undefined) {
+      delete response[key];
     }
   });
-  
-  socket.on('end', () => {
-    console.error('Client disconnected');
-  });
-  
-  socket.on('error', (error) => {
-    console.error('Socket error:', error);
-  });
-};
+
+  output.write(JSON.stringify(response) + '\r\n');
+}
 
 // Create a MCP server using stdin/stdout
 process.stdin.setEncoding('utf8');
@@ -298,48 +199,35 @@ process.stdin.on('data', async (chunk) => {
       
       // Handle JSON-RPC messages
       if (message.jsonrpc === '2.0') {
-        let response;
+        let responseObj = {
+          jsonrpc: '2.0',
+          id: message.id
+        };
         
         if (message.method === 'initialize') {
           // Handle initialize request
-          response = {
-            jsonrpc: '2.0',
-            result: {
-              serverInfo: {
-                name: 'vibemcp-lite',
-                version: '0.1.0'
-              },
-              capabilities: {},
-              protocolVersion: '2024-11-05'
+          responseObj.result = {
+            serverInfo: {
+              name: 'vibemcp-lite',
+              version: '0.1.0'
             },
-            id: message.id
+            capabilities: {},
+            protocolVersion: '2024-11-05'
           };
         } else if (message.method === 'tools/list') {
           // Handle tools listing request
-          response = {
-            jsonrpc: '2.0',
-            result: {
-              tools: tools
-            },
-            id: message.id
+          responseObj.result = {
+            tools: tools
           };
         } else if (message.method === 'resources/list') {
           // Handle resources listing request
-          response = {
-            jsonrpc: '2.0',
-            result: {
-              resources: []
-            },
-            id: message.id
+          responseObj.result = {
+            resources: []
           };
         } else if (message.method === 'prompts/list') {
           // Handle prompts listing request
-          response = {
-            jsonrpc: '2.0',
-            result: {
-              prompts: []
-            },
-            id: message.id
+          responseObj.result = {
+            prompts: []
           };
         } else if (message.method === 'exec') {
           // Handle exec request (pass to backend)
@@ -358,35 +246,24 @@ process.stdin.on('data', async (chunk) => {
               command
             });
             
-            response = {
-              jsonrpc: '2.0',
-              result: {
-                stdout: JSON.stringify(apiResponse.data),
-                stderr: ''
-              },
-              id: message.id
+            responseObj.result = {
+              stdout: JSON.stringify(apiResponse.data),
+              stderr: ''
             };
           } catch (error) {
             console.error('Error executing command:', error);
-            response = {
-              jsonrpc: '2.0',
-              error: {
-                code: -32603,
-                message: `Command execution failed: ${error.message}`
-              },
-              id: message.id
+            responseObj.error = {
+              code: -32603,
+              message: `Command execution failed: ${error.message}`
             };
+            delete responseObj.result;
           }
         } else if (message.method === 'shutdown') {
           // Handle shutdown request
-          response = {
-            jsonrpc: '2.0',
-            result: null,
-            id: message.id
-          };
+          responseObj.result = null;
           
           // Give the response time to be sent before shutting down
-          process.stdout.write(JSON.stringify(response) + '\r\n');
+          sendJsonRpcResponse(process.stdout, responseObj);
           setTimeout(() => {
             if (backendProcess) {
               backendProcess.kill();
@@ -396,34 +273,163 @@ process.stdin.on('data', async (chunk) => {
           continue;
         } else {
           // Unknown method
-          response = {
-            jsonrpc: '2.0',
-            error: {
-              code: -32601,
-              message: `Method not found: ${message.method}`
-            },
-            id: message.id
+          responseObj.error = {
+            code: -32601,
+            message: `Method not found: ${message.method}`
           };
+          delete responseObj.result;
         }
         
-        process.stdout.write(JSON.stringify(response) + '\r\n');
+        sendJsonRpcResponse(process.stdout, responseObj);
       }
     } catch (error) {
       console.error('Error processing message from stdin:', error);
-      process.stdout.write(JSON.stringify({
+      
+      const errorResponse = {
         jsonrpc: '2.0',
+        id: null,
         error: {
           code: -32700,
           message: 'Parse error'
-        },
-        id: null
-      }) + '\r\n');
+        }
+      };
+      
+      sendJsonRpcResponse(process.stdout, errorResponse);
     }
   }
 });
 
 // Also create a TCP server for testing
-const tcpServer = createServer(handleConnection);
+const tcpServer = createServer(async (socket) => {
+  console.error('Client connected to TCP server');
+  
+  // Wait for the backend to be ready
+  try {
+    await waitForBackend();
+  } catch (error) {
+    console.error(error.message);
+    sendJsonRpcResponse(socket, {
+      id: null,
+      error: {
+        code: -32603,
+        message: 'Internal error: backend not available'
+      }
+    });
+    socket.end();
+    return;
+  }
+  
+  let buffer = '';
+  
+  socket.on('data', async (data) => {
+    buffer += data.toString();
+    
+    // Process each complete message
+    let newlineIndex;
+    while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+      const line = buffer.substring(0, newlineIndex).trim();
+      buffer = buffer.substring(newlineIndex + 1);
+      
+      if (!line) continue;
+      
+      try {
+        const message = JSON.parse(line);
+        console.error('Received message from TCP:', message);
+        
+        // Handle JSON-RPC messages
+        if (message.jsonrpc === '2.0') {
+          let responseObj = {
+            jsonrpc: '2.0',
+            id: message.id
+          };
+          
+          if (message.method === 'initialize') {
+            // Handle initialize request
+            responseObj.result = {
+              serverInfo: {
+                name: 'vibemcp-lite',
+                version: '0.1.0'
+              },
+              capabilities: {},
+              protocolVersion: '2024-11-05'
+            };
+          } else if (message.method === 'tools/list') {
+            // Handle tools listing request
+            responseObj.result = {
+              tools: tools
+            };
+          } else if (message.method === 'resources/list') {
+            // Handle resources listing request
+            responseObj.result = {
+              resources: []
+            };
+          } else if (message.method === 'prompts/list') {
+            // Handle prompts listing request
+            responseObj.result = {
+              prompts: []
+            };
+          } else if (message.method === 'exec') {
+            // Handle exec request (pass to backend)
+            try {
+              const command = message.params.command;
+              console.error(`Executing command: ${command}`);
+              
+              const apiResponse = await axios.post(`${SERVER_URL}/api/mcp/execute`, {
+                command
+              });
+              
+              responseObj.result = {
+                stdout: JSON.stringify(apiResponse.data),
+                stderr: ''
+              };
+            } catch (error) {
+              console.error('Error executing command:', error);
+              responseObj.error = {
+                code: -32603,
+                message: `Command execution failed: ${error.message}`
+              };
+              delete responseObj.result;
+            }
+          } else if (message.method === 'shutdown') {
+            // Handle shutdown request
+            responseObj.result = null;
+          } else {
+            // Unknown method
+            responseObj.error = {
+              code: -32601,
+              message: `Method not found: ${message.method}`
+            };
+            delete responseObj.result;
+          }
+          
+          sendJsonRpcResponse(socket, responseObj);
+        }
+      } catch (error) {
+        console.error('Error processing message from TCP:', error);
+        
+        const errorResponse = {
+          jsonrpc: '2.0',
+          id: null,
+          error: {
+            code: -32700,
+            message: 'Parse error'
+          }
+        };
+        
+        sendJsonRpcResponse(socket, errorResponse);
+      }
+    }
+  });
+  
+  socket.on('end', () => {
+    console.error('TCP client disconnected');
+  });
+  
+  socket.on('error', (error) => {
+    console.error('TCP socket error:', error);
+  });
+});
+
 tcpServer.listen(0, () => {
   const address = tcpServer.address();
   console.error(`TCP server listening on ${address.port}`);
